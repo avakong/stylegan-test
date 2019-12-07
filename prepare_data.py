@@ -48,7 +48,7 @@ def prepare(transaction, dataset, n_worker, sizes=(8, 16, 32, 64, 128, 256, 512,
     with multiprocessing.Pool(n_worker) as pool:
         for i, imgs in tqdm(pool.imap_unordered(resize_fn, files)):
             for size, img in zip(sizes, imgs):
-                key = f'{size}-{str(i).zfill(5)}'.encode('utf-8')
+                key = '{:d}-{:05d}'.format(size, i).encode('utf-8')
                 transaction.put(key, img)
 
             total += 1

@@ -30,7 +30,7 @@ class MultiResolutionDataset(Dataset):
 
     def __getitem__(self, index):
         with self.env.begin(write=False) as txn:
-            key = f'{self.resolution}-{str(index).zfill(5)}'.encode('utf-8')
+            key = '{:d}-{:05d}'.format(self.resolution, index).encode('utf-8')
             img_bytes = txn.get(key)
 
         buffer = BytesIO(img_bytes)

@@ -54,7 +54,7 @@ def train(args, dataset, generator, discriminator):
     adjust_lr(g_optimizer, args.lr.get(resolution, 0.001))
     adjust_lr(d_optimizer, args.lr.get(resolution, 0.001))
 
-    pbar = tqdm(range(3_000_000))
+    pbar = tqdm(range(args.phase * 2))
 
     requires_grad(generator, False)
     requires_grad(discriminator, True)
@@ -105,7 +105,7 @@ def train(args, dataset, generator, discriminator):
                     'd_optimizer': d_optimizer.state_dict(),
                     'g_running': g_running.state_dict(),
                 },
-                f'checkpoint/train_step-{ckpt_step}.model',
+                'checkpoint/train_step-{:d}.model'.format(ckpt_step),
             )
 
             adjust_lr(g_optimizer, args.lr.get(resolution, 0.001))
@@ -231,7 +231,7 @@ def train(args, dataset, generator, discriminator):
 
             utils.save_image(
                 torch.cat(images, 0),
-                f'sample/{str(i + 1).zfill(6)}.png',
+                'sample/{:06d}.png'.format(i + 1),
                 nrow=gen_i,
                 normalize=True,
                 range=(-1, 1),
@@ -239,12 +239,13 @@ def train(args, dataset, generator, discriminator):
 
         if (i + 1) % 10000 == 0:
             torch.save(
-                g_running.state_dict(), f'checkpoint/{str(i + 1).zfill(6)}.model'
+                g_running.state_dict(), 'checkpoint/{:06d}.model'.format(i + 1)
             )
 
         state_msg = (
-            f'Size: {4 * 2 ** step}; G: {gen_loss_val:.3f}; D: {disc_loss_val:.3f};'
-            f' Grad: {grad_loss_val:.3f}; Alpha: {alpha:.5f}'
+            'Size: {:d}; G: {:.3f}; D: {:.3f}; '.format(4 * 2 ** step, gen_loss_val, disc_loss_val) +
+            'Grad: {:.3f}; Alpha: {:.5f} '.format(grad_loss_val, alpha) +
+            '{:d}'.format(i)
         )
 
         pbar.set_description(state_msg)
@@ -261,15 +262,15 @@ if __name__ == '__main__':
     parser.add_argument(
         '--phase',
         type=int,
-        default=600_000,
+        default=200000,
         help='number of samples used for each training phases',
     )
     parser.add_argument('--lr', default=0.001, type=float, help='learning rate')
     parser.add_argument('--sched', action='store_true', help='use lr scheduling')
-    parser.add_argument('--init_size', default=8, type=int, help='initial image size')
-    parser.add_argument('--max_size', default=1024, type=int, help='max image size')
+    parser.add_argument('--init_size', default=16, type=int, help='initial image size')
+    parser.add_argument('--max_size', default=512, type=int, help='max image size')
     parser.add_argument(
-        '--ckpt', default=None, type=str, help='load from previous checkpoints'
+        '--ckpt', default=None, type=str, help='load from previous checkpoints' 
     )
     parser.add_argument(
         '--no_from_rgb_activate',
