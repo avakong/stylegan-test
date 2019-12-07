@@ -370,6 +370,7 @@ class StyledConvBlock(nn.Module):
 
         return out
 
+NETWORK_BREADTH = 128
 
 class Generator(nn.Module):
     def __init__(self, code_dim, fused=True):
@@ -377,13 +378,13 @@ class Generator(nn.Module):
 
         self.progression = nn.ModuleList(
             [
-                StyledConvBlock(512, 512, 3, 1, initial=True),  # 4
-                StyledConvBlock(512, 512, 3, 1, upsample=True),  # 8
-                StyledConvBlock(512, 512, 3, 1, upsample=True),  # 16
-                StyledConvBlock(512, 512, 3, 1, upsample=True),  # 32
-                StyledConvBlock(512, 256, 3, 1, upsample=True),  # 64
-                StyledConvBlock(256, 128, 3, 1, upsample=True, fused=fused),  # 128
-                StyledConvBlock(128, 64, 3, 1, upsample=True, fused=fused),  # 256
+                StyledConvBlock(NETWORK_BREADTH, NETWORK_BREADTH, 3, 1, initial=True),  # 4
+                StyledConvBlock(NETWORK_BREADTH, NETWORK_BREADTH, 3, 1, upsample=True),  # 8
+                StyledConvBlock(NETWORK_BREADTH, NETWORK_BREADTH, 3, 1, upsample=True),  # 16
+                StyledConvBlock(NETWORK_BREADTH, NETWORK_BREADTH, 3, 1, upsample=True),  # 32
+                StyledConvBlock(NETWORK_BREADTH, NETWORK_BREADTH, 3, 1, upsample=True),  # 64
+                StyledConvBlock(NETWORK_BREADTH, NETWORK_BREADTH, 3, 1, upsample=True, fused=fused),  # 128
+                StyledConvBlock(NETWORK_BREADTH, 64, 3, 1, upsample=True, fused=fused),  # 256
                 StyledConvBlock(64, 32, 3, 1, upsample=True, fused=fused),  # 512
                 StyledConvBlock(32, 16, 3, 1, upsample=True, fused=fused),  # 1024
             ]
@@ -391,12 +392,12 @@ class Generator(nn.Module):
 
         self.to_rgb = nn.ModuleList(
             [
-                EqualConv2d(512, 3, 1),
-                EqualConv2d(512, 3, 1),
-                EqualConv2d(512, 3, 1),
-                EqualConv2d(512, 3, 1),
-                EqualConv2d(256, 3, 1),
-                EqualConv2d(128, 3, 1),
+                EqualConv2d(NETWORK_BREADTH, 3, 1),
+                EqualConv2d(NETWORK_BREADTH, 3, 1),
+                EqualConv2d(NETWORK_BREADTH, 3, 1),
+                EqualConv2d(NETWORK_BREADTH, 3, 1),
+                EqualConv2d(NETWORK_BREADTH, 3, 1),
+                EqualConv2d(NETWORK_BREADTH, 3, 1),
                 EqualConv2d(64, 3, 1),
                 EqualConv2d(32, 3, 1),
                 EqualConv2d(16, 3, 1),
@@ -511,12 +512,12 @@ class Discriminator(nn.Module):
             [
                 ConvBlock(16, 32, 3, 1, downsample=True, fused=fused),  # 512
                 ConvBlock(32, 64, 3, 1, downsample=True, fused=fused),  # 256
-                ConvBlock(64, 128, 3, 1, downsample=True, fused=fused),  # 128
-                ConvBlock(128, 256, 3, 1, downsample=True, fused=fused),  # 64
-                ConvBlock(256, 512, 3, 1, downsample=True),  # 32
-                ConvBlock(512, 512, 3, 1, downsample=True),  # 16
-                ConvBlock(512, 512, 3, 1, downsample=True),  # 8
-                ConvBlock(512, 512, 3, 1, downsample=True),  # 4
+                ConvBlock(64, NETWORK_BREADTH, 3, 1, downsample=True, fused=fused),  # 128
+                ConvBlock(NETWORK_BREADTH, NETWORK_BREADTH, 3, 1, downsample=True, fused=fused),  # 64
+                ConvBlock(NETWORK_BREADTH, NETWORK_BREADTH, 3, 1, downsample=True),  # 32
+                ConvBlock(NETWORK_BREADTH, NETWORK_BREADTH, 3, 1, downsample=True),  # 16
+                ConvBlock(NETWORK_BREADTH, NETWORK_BREADTH, 3, 1, downsample=True),  # 8
+                ConvBlock(NETWORK_BREADTH, 512, 3, 1, downsample=True),  # 4
                 ConvBlock(513, 512, 3, 1, 4, 0),
             ]
         )
@@ -533,11 +534,11 @@ class Discriminator(nn.Module):
                 make_from_rgb(16),
                 make_from_rgb(32),
                 make_from_rgb(64),
-                make_from_rgb(128),
-                make_from_rgb(256),
-                make_from_rgb(512),
-                make_from_rgb(512),
-                make_from_rgb(512),
+                make_from_rgb(NETWORK_BREADTH),
+                make_from_rgb(NETWORK_BREADTH),
+                make_from_rgb(NETWORK_BREADTH),
+                make_from_rgb(NETWORK_BREADTH),
+                make_from_rgb(NETWORK_BREADTH),
                 make_from_rgb(512),
             ]
         )

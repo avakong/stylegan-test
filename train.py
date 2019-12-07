@@ -237,7 +237,7 @@ def train(args, dataset, generator, discriminator):
                 range=(-1, 1),
             )
 
-        if (i + 1) % 10000 == 0:
+        if (i + 1) % 1000 == 0:
             torch.save(
                 g_running.state_dict(), 'checkpoint/{:06d}.model'.format(i + 1)
             )
@@ -340,6 +340,6 @@ if __name__ == '__main__':
 
     args.gen_sample = {512: (8, 4), 1024: (4, 2)}
 
-    args.batch_default = 32
+    args.batch_default = 8
 
     train(args, dataset, generator, discriminator)
