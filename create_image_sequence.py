@@ -17,15 +17,20 @@ standard_normal_distribution = torch.distributions.normal.Normal(0, 1)
 RESOLUTION = 256
 STEP = int(math.log(RESOLUTION, 2)) - 2
 
-SAMPLE_COUNT = 10 # Number of distinct objects to generate and interpolate between
-TRANSITION_FRAMES = 180
+SAMPLE_COUNT = 20 # Number of distinct objects to generate and interpolate between
+TRANSITION_FRAMES = 1800 // SAMPLE_COUNT
 
 LATENT_CODE_SIZE = 512
 
-codes = standard_normal_distribution.sample((SAMPLE_COUNT + 1, LATENT_CODE_SIZE)).numpy()
+TILES = (3, 3)
 
-codes[0, :] = codes[-1, :] # Make animation periodic
-spline = CubicSpline(np.arange(SAMPLE_COUNT + 1), codes, axis=0, bc_type='periodic')
+
+def get_spline():
+    codes = standard_normal_distribution.sample((SAMPLE_COUNT + 1, LATENT_CODE_SIZE)).numpy()
+    codes[0, :] = codes[-1, :] # Make animation periodic
+    return CubicSpline(np.arange(SAMPLE_COUNT + 1), codes, axis=0, bc_type='periodic')
+
+splines = [get_spline() for i in range(TILES[0] * TILES[1])]
 
 def create_image_sequence():
     frame_index = 0
@@ -33,24 +38,25 @@ def create_image_sequence():
 
     for sample_index in range(SAMPLE_COUNT):
         for step in range(TRANSITION_FRAMES):
-            code = torch.tensor(spline(float(sample_index) + step / TRANSITION_FRAMES), dtype=torch.float32, device=device).reshape(1, -1)
-            
-            image = generator(
-                code,
-                step=STEP,
-                alpha=1,
-                mean_style=mean_style,
-                style_weight=0.7,
-            )
-            
-            utils.save_image(image, 'images/frame-{:05d}.png'.format(frame_index), normalize=True, range=(-1, 1))
+            images = []
+            for spline in splines:
+                code = torch.tensor(spline(float(sample_index) + step / TRANSITION_FRAMES), dtype=torch.float32, device=device).reshape(1, -1)
+                images.append(generator(code, step=STEP, alpha=1, mean_style=mean_style, style_weight=0.7))
+
+            result = torch.zeros((3, TILES[0] * RESOLUTION, TILES[1] * RESOLUTION), device=device)
+            p = 0
+            for x in range(TILES[0]):
+                for y in range(TILES[1]):
+                    result[:, x * RESOLUTION:(x+1)*RESOLUTION, y * RESOLUTION:(y+1)*RESOLUTION] = images[p]
+                    p += 1
+                
+            utils.save_image(result, 'images/frame-{:05d}.png'.format(frame_index), normalize=True, range=(-1, 1))
             
             frame_index += 1
             progress_bar.update()
     
     print("\n\nUse this command to create a video:\n")
     print('ffmpeg -framerate 30 -i images/frame-%05d.png -c:v libx264 -profile:v high -crf 19 -pix_fmt yuv420p video.mp4')
-
 
 
 generator = StyledGenerator(LATENT_CODE_SIZE).to(device)
