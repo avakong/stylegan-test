@@ -96,5 +96,5 @@ if __name__ == '__main__':
     for j in range(20):
         img = style_mixing(generator, step, mean_style, args.n_col, args.n_row, device)
         utils.save_image(
-            img, f'sample_mixing_{j}.png', nrow=args.n_col + 1, normalize=True, range=(-1, 1)
+            img, 'sample_mixing_{:d}.png'.format(j), nrow=args.n_col + 1, normalize=True, range=(-1, 1)
         )
