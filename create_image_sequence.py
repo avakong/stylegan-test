@@ -30,18 +30,29 @@ def get_spline():
     codes[0, :] = codes[-1, :] # Make animation periodic
     return CubicSpline(np.arange(SAMPLE_COUNT + 1), codes, axis=0, bc_type='periodic')
 
+def get_noise():
+    noise = []
+
+    for i in range(STEP + 1):
+        size = 4 * 2 ** i
+        noise.append(torch.randn(1, 1, size, size, device=device))
+
+    return noise
+
 splines = [get_spline() for i in range(TILES[0] * TILES[1])]
+noises = [get_noise() for i in range(TILES[0] * TILES[1])]
 
 def create_image_sequence():
     frame_index = 0
     progress_bar = tqdm(total=SAMPLE_COUNT * TRANSITION_FRAMES)
 
+    
     for sample_index in range(SAMPLE_COUNT):
         for step in range(TRANSITION_FRAMES):
             images = []
-            for spline in splines:
+            for spline, noise in zip(splines, noises):
                 code = torch.tensor(spline(float(sample_index) + step / TRANSITION_FRAMES), dtype=torch.float32, device=device).reshape(1, -1)
-                images.append(generator(code, step=STEP, alpha=1, mean_style=mean_style, style_weight=0.7))
+                images.append(generator(code, noise=noise, step=STEP, alpha=1, mean_style=mean_style, style_weight=0.7))
 
             result = torch.zeros((3, TILES[0] * RESOLUTION, TILES[1] * RESOLUTION), device=device)
             p = 0
